@@ -1,8 +1,12 @@
+import pickle
 import numpy as np
 
 from keras.datasets import fashion_mnist
 from tensorflow import keras
 from keras import backend as K
+
+
+DEFAULT_PATH = "./assets/lookuptable.pkl"
 
 
 class Table:
@@ -54,7 +58,7 @@ def bool2int(x):
     return y
 
 
-class LSH:
+class LookUpTable:
     def __init__(self, hash_size, dim, num_tables):
         self.num_tables = num_tables
         self.tables = []
@@ -70,6 +74,14 @@ class LSH:
         for table in self.tables:
             results.extend(table.query(vectors))
         return results
+
+    def save(self, path=DEFAULT_PATH):
+        with open(path, 'wb') as outp:  # Overwrites any existing file.
+            pickle.dump(self.tables, outp, pickle.HIGHEST_PROTOCOL)
+
+    def load(self, path=DEFAULT_PATH):
+        with open(path, 'rb') as inp:
+            self.tables = pickle.load(inp)
 
 
 def grayscale_to_rgb(images, channel_axis=-1):

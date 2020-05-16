@@ -1,7 +1,8 @@
 import unittest
 
 from dataset import download_fashion_mnist
-from model import Model,get_pretrained_model
+from model import get_pretrained_model
+
 
 class TestDataset(unittest.TestCase):
     def test_download_fashion_mnist(self):
