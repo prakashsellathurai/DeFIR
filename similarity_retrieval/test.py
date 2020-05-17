@@ -1,7 +1,7 @@
 import unittest
 
+from model import LatentModel, get_pretrained_model
 from dataset import download_fashion_mnist
-from model import get_pretrained_model
 
 
 class TestDataset(unittest.TestCase):
@@ -24,6 +24,25 @@ class TestModel(unittest.TestCase):
             use_pretrained=True,
         )
         assert model.__class__.__name__ == "Sequential"
+
+    def test_model_training(self):
+        training_files = download_fashion_mnist()
+        embedding_model = get_pretrained_model()
+
+        latent_model = LatentModel(embedding_model)
+        latent_model.train(training_files)
+
+    def test_model_query(self):
+        (x_train, y_train), (x_test, y_test) = download_fashion_mnist()
+        training_files = (x_train, y_train)
+        embedding_model = get_pretrained_model()
+
+        latent_model = LatentModel(embedding_model)
+        latent_model.train(training_files)
+
+        image = x_test[0]
+        index = latent_model.query(image)
+        assert index.__class__.__name__ == "dict"
 
 
 if __name__ == "__main__":
