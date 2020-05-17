@@ -34,7 +34,7 @@ class LatentModel:
 
         self.prediction_model = prediction_model
         self.concrete_function = concrete_function
-        self.model_path=model_path
+        self.model_path = model_path
 
     def train(self, training_files):
         if os.path.isfile(self.model_path):
