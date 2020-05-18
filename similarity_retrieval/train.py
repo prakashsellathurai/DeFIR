@@ -1,6 +1,4 @@
-import os
-
-from model import LatentModel, get_pretrained_model, DEFAULT_PATH
+from model import LatentModel, get_pretrained_model
 from dataset import download_fashion_mnist
 
 if __name__ == "__main__":
@@ -9,4 +7,3 @@ if __name__ == "__main__":
 
     latent_model = LatentModel(embedding_model)
     latent_model.train(training_files)
-    latent_model.save()

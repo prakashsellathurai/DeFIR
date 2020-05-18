@@ -1,5 +1,3 @@
-""" keras  example for image similarity reteieval
-"""
 import os
 
 
