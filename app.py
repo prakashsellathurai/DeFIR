@@ -14,31 +14,30 @@ def plot_images(images, labels, show_plots=False):
     for (i, image) in enumerate(images):
         ax = plt.subplot(len(images) // columns + 1, columns, i + 1)
         if i == 0:
-            ax.set_title("Query Image\n" + "Label: {}".format(labels[i]))
+            ax.set_title("Query Image\n")
         else:
-            ax.set_title("Similar Image # " + str(i) + "\nLabel: {}".format(labels[i]))
+            ax.set_title("Similar Image "+ str(i))
         plt.imshow(image)
         plt.axis("off")
     st.pyplot(plt)
 
-def visualize_query_results(latent_model,  query_image, training_images, show_plots=False):
+def visualize_query_results(latent_model,  query_image, training_images,no_of_results, show_plots=False):
 
 
-    results = latent_model.query(image)
+    results = latent_model.query(query_image)
 
     candidates = []
     labels = []
     overlaps = []
-
     for idx, r in enumerate(sorted(results, key=results.get, reverse=True)):
-        if idx == 4:
+        if idx == no_of_results:
             break
         image_id, label = r.split("_")[0], r.split("_")[1]
         candidates.append(training_images[int(image_id)])
         labels.append(label)
         overlaps.append(results[r])
 
-    candidates.insert(0, image)
+    candidates.insert(0, query_image)
     labels.insert(0, "")
 
     plot_images(candidates, labels, show_plots)
@@ -62,9 +61,10 @@ if __name__ == "__main__":
 
     val_images = np.array(val_images)
     val_labels = np.array(val_labels)
-    for _ in range(5):
-        idx = np.random.choice(len(val_images)-1)
+    
+    idx = np.random.choice(len(val_images)-1)
 
-        query_image = val_images[idx]
-        
-        visualize_query_results(latent_model, query_image, x_train, show_plots=True)
+    query_image = val_images[idx]
+    no_of_results = st.slider('count of images to show',min_value=2)  # 👈 this is a widget
+    
+    visualize_query_results(latent_model, query_image, x_train,no_of_results, show_plots=True)
