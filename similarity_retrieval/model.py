@@ -8,12 +8,9 @@ from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import layers
 from tqdm import tqdm
 
-try:
-    from similarity_retrieval.database import DEFAULT_PATH, LookUpTable
-except Exception as e:
-    print("Import error: {}".format(e))
-    print("importing from local directory")
-    
+
+from similarity_retrieval.database import DEFAULT_PATH, LookUpTable
+from similarity_retrieval.database import DEFAULT_ANNOY_PATH, KNNIndexTable
 
 
 class LatentModel:
@@ -33,6 +30,7 @@ class LatentModel:
         self.lookuptable = LookUpTable(
             self.hash_size, self.dim, self.num_tables
         )
+        self.KNNIndex = KNNIndexTable()
 
         self.prediction_model = prediction_model
         self.concrete_function = concrete_function
@@ -55,7 +53,7 @@ class LatentModel:
                     os.makedirs(dir_path)
 
             self.save(path=self.model_path)
-            
+
             for id, training_file in tqdm(enumerate(training_files)):
                 # Unpack the data.
                 image, label = training_file
@@ -68,10 +66,12 @@ class LatentModel:
                     ].numpy()
                 else:
                     features = self.prediction_model.predict(image)
+                self.KNNIndex.add(id, features)
                 self.lookuptable.add(id, features, label)
                 self.save(path=self.model_path)
             print("Saving the model to {}".format(self.model_path))
             self.save(path=self.model_path)
+            self.KNNIndex.save()
 
     def query(self, image, verbose=True):
         # Compute the embeddings of the query image and fetch the results.
@@ -85,20 +85,20 @@ class LatentModel:
         else:
             features = self.prediction_model.predict(image)
 
-        results = self.lookuptable.query(features)
+        results = self.KNNIndex.query(features,k=10)
         if verbose:
             print("Matches:", len(results))
 
-        # Calculate Jaccard index to quantify the similarity.
-        counts = {}
-        for r in results:
-            if r["id_label"] in counts:
-                counts[r["id_label"]] += 1
-            else:
-                counts[r["id_label"]] = 1
-        for k in counts:
-            counts[k] = float(counts[k]) / self.dim
-        return counts
+        # # Calculate Jaccard index to quantify the similarity.
+        # counts = {}
+        # for r in results:
+        #     if r["id_label"] in counts:
+        #         counts[r["id_label"]] += 1
+        #     else:
+        #         counts[r["id_label"]] = 1
+        # for k in counts:
+        #     counts[k] = float(counts[k]) / self.dim
+        return results
 
     def save(self, path=None):
         if path is None:
@@ -107,16 +107,19 @@ class LatentModel:
                 dir_path = os.path.dirname(os.path.abspath(path))
                 os.makedirs(dir_path)
         self.lookuptable.save(path)
+        self.KNNIndex.save()
 
     def load(self, path=None):
         if path is None:
             path = self.model_path
         self.lookuptable.load(path)
+        self.KNNIndex.load()
 
     def clear_cache(self, path=None):
         if path is None:
             path = self.model_path
         self.lookuptable.clear_cache(path)
+        self.KNNIndex.clear()
 
 
 def get_pretrained_model(

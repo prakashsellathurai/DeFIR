@@ -6,9 +6,31 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import datasets
 from keras import backend as K
-
+from annoy import AnnoyIndex
 
 DEFAULT_PATH = "assets/lookuptable.pkl"
+DEFAULT_ANNOY_PATH = "assets/annoy.ann"
+
+class KNNIndexTable:
+    def __init__(self, hash_size=8, dim=2048, num_tables=10):
+        self.table = AnnoyIndex(1, "angular")
+
+    def add(self, id, vectors):
+        self.table.add_item(id, vectors)
+
+    def query(self, vectors, k=1):
+        return self.table.get_nns_by_item(vectors, k)
+
+    def save(self, path=DEFAULT_ANNOY_PATH):
+        self.table.build(10)
+        self.table.save(path)
+
+    def load(self, path=DEFAULT_ANNOY_PATH):
+        self.table.load(path)
+
+    def clear(self, path=DEFAULT_ANNOY_PATH):
+        if os.path.isfile(path):
+            os.remove(path)
 
 
 class Table:
@@ -84,10 +106,11 @@ class LookUpTable:
     def load(self, path=DEFAULT_PATH):
         with open(path, "rb") as inp:
             self.tables = pickle.load(inp)
-  
+
     def clear_cache(self, path=DEFAULT_PATH):
         if os.path.isfile(path):
-        	os.remove(path)
+            os.remove(path)
+
 
 def grayscale_to_rgb(images, channel_axis=-1):
     images = K.expand_dims(images, axis=channel_axis)
