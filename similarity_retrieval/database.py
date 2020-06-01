@@ -12,14 +12,15 @@ DEFAULT_PATH = "assets/lookuptable.pkl"
 DEFAULT_ANNOY_PATH = "assets/annoy.ann"
 
 class KNNIndexTable:
-    def __init__(self, hash_size=8, dim=2048, num_tables=10):
-        self.table = AnnoyIndex(1, "angular")
+    def __init__(self, hash_size=2, dim=2048, num_tables=10):
+        self.table = AnnoyIndex(hash_size, "angular")
+        self.path = DEFAULT_ANNOY_PATH
 
     def add(self, id, vectors):
         self.table.add_item(id, vectors)
 
     def query(self, vectors, k=1):
-        return self.table.get_nns_by_item(vectors, k)
+        return self.table.get_nns_by_vector(vectors, k)
 
     def save(self, path=DEFAULT_ANNOY_PATH):
         self.table.build(10)

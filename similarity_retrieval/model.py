@@ -22,38 +22,29 @@ class LatentModel:
         dim=2048,
         num_tables=10,
         model_path=DEFAULT_PATH,
-        force_retrain=False
+        force_retrain=False,
     ):
         self.hash_size = hash_size
         self.dim = dim
         self.num_tables = num_tables
-        self.lookuptable = LookUpTable(
-            self.hash_size, self.dim, self.num_tables
-        )
-        self.KNNIndex = KNNIndexTable()
+        self.lookuptable = LookUpTable(self.hash_size, self.dim, self.num_tables)
+        self.KNNIndex = KNNIndexTable(hash_size=dim)
 
         self.prediction_model = prediction_model
         self.concrete_function = concrete_function
         self.model_path = model_path
         self.force_retrain = force_retrain
+        self.notloaded = True
 
     def train(self, training_files):
         if self.force_retrain:
-             self.clear_cache()
+            self.clear_cache()
 
         if os.path.isfile(self.model_path):
             print("Loading the model from {}".format(self.model_path))
+            print("Loading the knnmodel from {}".format(self.KNNIndex.path))
             self.load(path=self.model_path)
         else:
-
-            path = self.model_path
-            if not os.path.exists(path):
-                dir_path = os.path.dirname(os.path.abspath(path))
-                if not os.path.exists(dir_path):
-                    os.makedirs(dir_path)
-
-            self.save(path=self.model_path)
-
             for id, training_file in tqdm(enumerate(training_files)):
                 # Unpack the data.
                 image, label = training_file
@@ -66,39 +57,36 @@ class LatentModel:
                     ].numpy()
                 else:
                     features = self.prediction_model.predict(image)
-                self.KNNIndex.add(id, features)
+                self.KNNIndex.add(id, features[0])
                 self.lookuptable.add(id, features, label)
-                self.save(path=self.model_path)
+
             print("Saving the model to {}".format(self.model_path))
             self.save(path=self.model_path)
-            self.KNNIndex.save()
+        self.notloaded = False
 
     def query(self, image, verbose=True):
+        if self.notloaded:
+            self.load()
+
         # Compute the embeddings of the query image and fetch the results.
         if len(image.shape) < 4:
             image = image[None, ...]
 
-        if self.concrete_function:
-            features = self.prediction_model(tf.constant(image))[
-                "normalization"
-            ].numpy()
-        else:
-            features = self.prediction_model.predict(image)
+        features = self.prediction_model.predict(image)
 
-        results = self.KNNIndex.query(features,k=10)
-        if verbose:
-            print("Matches:", len(results))
-
+        ids = self.KNNIndex.query(features[0], k=10)
+        lookups = self.lookuptable.query(features)
         # # Calculate Jaccard index to quantify the similarity.
-        # counts = {}
-        # for r in results:
-        #     if r["id_label"] in counts:
-        #         counts[r["id_label"]] += 1
-        #     else:
-        #         counts[r["id_label"]] = 1
-        # for k in counts:
-        #     counts[k] = float(counts[k]) / self.dim
-        return results
+        counts = {}
+        for r in lookups:
+            if r["id_label"] in counts:
+                counts[r["id_label"]] += 1
+            else:
+                counts[r["id_label"]] = 1
+        for k in counts:
+            counts[k] = float(counts[k]) / self.dim
+        
+        return ids
 
     def save(self, path=None):
         if path is None:
@@ -153,6 +141,7 @@ def get_pretrained_model(
                     layers.Normalization(mean=0, variance=1),
                     layers.Flatten(),
                     layers.Dense(2048, activation="relu"),
+                    layers.Flatten(),
                 ],
                 name="embedding_model",
             )
