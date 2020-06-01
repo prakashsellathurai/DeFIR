@@ -8,7 +8,7 @@ from similarity_retrieval.model import LatentModel, get_pretrained_model
 from similarity_retrieval.database import download_fashion_mnist, DEFAULT_PATH
 
 
-def plot_images(images, labels, show_plots=False):
+def plot_images(images):
     plt.figure(figsize=(20, 10))
     columns = 5
     for (i, image) in enumerate(images):
@@ -24,23 +24,25 @@ def plot_images(images, labels, show_plots=False):
 def visualize_query_results(latent_model,  query_image, training_images,no_of_results, show_plots=False):
 
 
-    results = latent_model.query(query_image)
+    ids = latent_model.query(query_image)
 
     candidates = []
-    labels = []
-    overlaps = []
-    for idx, r in enumerate(sorted(results, key=results.get, reverse=True)):
+
+    
+    for idx,id in enumerate(ids):
         if idx == no_of_results:
             break
-        image_id, label = r.split("_")[0], r.split("_")[1]
-        candidates.append(training_images[int(image_id)])
-        labels.append(label)
-        overlaps.append(results[r])
+        candidates.append(training_images[int(id)])
+        
+    # for idx, r in enumerate(sorted(results, key=results.get, reverse=True)):
+    #     if idx == no_of_results:
+    #         break
+    #     image_id, label = r.split("_")[0], r.split("_")[1]
+    #     candidates.append(training_images[int(image_id)])
 
     candidates.insert(0, query_image)
-    labels.insert(0, "")
 
-    plot_images(candidates, labels, show_plots)
+    plot_images(candidates)
 
 
 
