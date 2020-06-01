@@ -5,14 +5,13 @@ from similarity_retrieval.model import LatentModel, get_pretrained_model
 from similarity_retrieval.database import download_fashion_mnist
 
 
-
 class TestDataset(unittest.TestCase):
     def test_download_fashion_mnist(self):
         (x_train, y_train), (x_test, y_test) = download_fashion_mnist()
-        assert x_train.shape == (60000, 28, 28, 3)
+        assert x_train.shape == (10000, 28, 28, 3)
         assert x_test.shape == (10000, 28, 28, 3)
 
-        assert y_train.shape == (60000, 10)
+        assert y_train.shape == (10000, 10)
         assert y_test.shape == (10000, 10)
 
 
@@ -44,7 +43,7 @@ class TestModel(unittest.TestCase):
 
         image = x_test[0]
         index = latent_model.query(image)
-        assert index.__class__.__name__ == "dict"
+        assert type(index) == list
 
 
 if __name__ == "__main__":

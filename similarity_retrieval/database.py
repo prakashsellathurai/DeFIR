@@ -11,6 +11,7 @@ from annoy import AnnoyIndex
 DEFAULT_PATH = "assets/lookuptable.pkl"
 DEFAULT_ANNOY_PATH = "assets/annoy.ann"
 
+
 class KNNIndexTable:
     def __init__(self, hash_size=2, dim=2048, num_tables=10):
         self.table = AnnoyIndex(hash_size, "angular")
@@ -143,4 +144,4 @@ def download_fashion_mnist(samples=10000):
     assert y_train.shape == (60000, 10)
     assert y_test.shape == (10000, 10)
 
-    return (x_train[:samples], y_train[:samples]), (x_test[:samples], y_test[:samples])
+    return (x_train[:samples], y_train[:samples]), (x_test, y_test)

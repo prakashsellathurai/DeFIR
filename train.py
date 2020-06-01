@@ -6,7 +6,7 @@ if __name__ == "__main__":
     training_files = zip(x_train, y_train)
     embedding_model = get_pretrained_model()
 
-    latent_model = LatentModel(embedding_model,  force_retrain=True)
+    latent_model = LatentModel(embedding_model, force_retrain=True)
     print("\033[92m training started  \033[0m")
     latent_model.train(training_files)
     print("\033[92m training ended  \033[0m")
