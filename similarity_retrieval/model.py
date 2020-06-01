@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 
 from similarity_retrieval.database import DEFAULT_PATH, LookUpTable
-from similarity_retrieval.database import DEFAULT_ANNOY_PATH, KNNIndexTable
+from similarity_retrieval.database import KNNIndexTable
 
 
 class LatentModel:
@@ -85,7 +85,7 @@ class LatentModel:
                 counts[r["id_label"]] = 1
         for k in counts:
             counts[k] = float(counts[k]) / self.dim
-        
+
         return ids
 
     def save(self, path=None):
