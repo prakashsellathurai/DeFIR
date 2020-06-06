@@ -1,24 +1,50 @@
-# Image Similarity Retrieval
-This is an experimental project aimed to build an Image Search system using deep-learning
+# DeFIR
+DeepFeature-based image retrieval system utilising Nearest Neighbour Search and Deep Learning. 
+
+
+## Installation
+
+Use the package manager [pip](https://pip.pypa.io/en/stable/).
+
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+To view the results from pre-trained model Run the cmd below
+```bash
+streamlit run app.py
+```
+
+
 
 ## Technical Details:
+- Model Architecture:  VGG16 
+- Used Dataset : [Fashion Mnist](https://github.com/zalandoresearch/fashion-mnist).
+- k-NN indexer:  [Annoy](https://github.com/spotify/annoy) library  by spotify .
+- In training stage, the feature vectors for each images in the database are generated from large pretrained models and these vectors's Indices are simultaneously updated on the Nearest neghbour tree Index that are kept in memory.
+- In Inference stage, feature vector generated for query image and this feature vector is used as a target in  nearest neighbour search on our NN tree. 
 
-**Model:**  VGG16 
-**Test Data set:** Fashion Mnist [link](https://github.com/zalandoresearch/fashion-mnist).
-**k-NN indexer:** Annoy library  by spotify [link](https://github.com/spotify/annoy).
 
-## Citation:
+
+## Advanced Usage
+1. To train the model on your own dataset , 
+    - go through `train.py`, before running it.
+    - `LatentModel` accepts only dataset of  sequence type (eg, numpy arrays and ` tf.data.dataset`)
+2. To use custom large pretrained models like transformers or EfficientNet.
+    - add them to `get_pretrained_model()` residing in `sim..,retrieval/model.py`
+    - make sure to configure the required final layer accordingly. 
+> caution: The project is experimental and uses in memory lookup tables and vectors, which may break on bigger datasets with cardinality more than 10K.
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+## License
+ work in progress
+
+## References:
 ```
-Ups and downs: Modeling the visual evolution of fashion trends with one-class collaborative filtering
-R. He, J. McAuley
-WWW, 2016
-(http://cseweb.ucsd.edu/~jmcauley/pdfs/www16a.pdf)
-
-Image-based recommendations on styles and substitutes
-J. McAuley, C. Targett, J. Shi, A. van den Hengel
-SIGIR, 2015
-(http://cseweb.ucsd.edu/~jmcauley/pdfs/sigir15.pdf)
-
 Image-based Product Recommendation System with Convolutional Neural Networks
 Luyang Chen, Fan Yang, Heqing Yang
 CS231n, 2017
