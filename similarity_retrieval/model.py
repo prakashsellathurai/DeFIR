@@ -23,6 +23,7 @@ class LatentModel:
         num_tables=10,
         model_path=DEFAULT_PATH,
         force_retrain=False,
+        saveInLookupTable=False
     ):
         self.hash_size = hash_size
         self.dim = dim
@@ -35,6 +36,7 @@ class LatentModel:
         self.model_path = model_path
         self.force_retrain = force_retrain
         self.notloaded = True
+        self.saveInLookupTable = saveInLookupTable
 
     def train(self, training_files):
         if self.force_retrain:
@@ -45,20 +47,13 @@ class LatentModel:
             print("Loading the knnmodel from {}".format(self.KNNIndex.path))
             self.load(path=self.model_path)
         else:
-            for id, training_file in tqdm(enumerate(training_files)):
-                # Unpack the data.
-                image, label = training_file
+            for id, (image, label) in tqdm(enumerate(training_files)):
                 if len(image.shape) < 4:
                     image = image[None, ...]
-
-                if self.concrete_function:
-                    features = self.prediction_model(tf.constant(image))[
-                        "normalization"
-                    ].numpy()
-                else:
-                    features = self.prediction_model.predict(image)
+                features = self.prediction_model.predict(image)
                 self.KNNIndex.add(id, features[0])
-                self.lookuptable.add(id, features, label)
+                if self.saveInLookupTable:
+                    self.lookuptable.add(id, features, label)
 
             print("Saving the model to {}".format(self.model_path))
             self.save(path=self.model_path)
