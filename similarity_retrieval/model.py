@@ -1,11 +1,16 @@
 """ keras  example for image similarity reteieval
 """
+import os
+
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import layers
-from dataset import LSH, download_fashion_mnist
+from tqdm import tqdm
+
+from dataset import LookUpTable, DEFAULT_PATH
 
 
 class LatentModel:
@@ -16,31 +21,41 @@ class LatentModel:
         hash_size=8,
         dim=2048,
         num_tables=10,
+        model_path=DEFAULT_PATH
     ):
         self.hash_size = hash_size
         self.dim = dim
         self.num_tables = num_tables
-        self.lsh = LSH(self.hash_size, self.dim, self.num_tables)
+        self.lookuptable = LookUpTable(
+            self.hash_size,
+            self.dim,
+            self.num_tables
+        )
 
         self.prediction_model = prediction_model
         self.concrete_function = concrete_function
+        self.model_path=model_path
 
     def train(self, training_files):
-        for id, training_file in enumerate(training_files):
-            # Unpack the data.
-            image, label = training_file
-            if len(image.shape) < 4:
-                image = image[None, ...]
+        if os.path.isfile(self.model_path):
+            print("Loading the model from {}".format(self.model_path))
+            self.load(path=self.model_path)
+        else:
+            for id, training_file in tqdm(enumerate(training_files)):
+                # Unpack the data.
+                image, label = training_file
+                if len(image.shape) < 4:
+                    image = image[None, ...]
 
-            # Compute embeddings and update the LSH tables.
-            # More on `self.concrete_function()` later.
-            if self.concrete_function:
-                features = self.prediction_model(tf.constant(image))[
-                    "normalization"
-                ].numpy()
-            else:
-                features = self.prediction_model.predict(image)
-            self.lsh.add(id, features, label)
+                if self.concrete_function:
+                    features = self.prediction_model(tf.constant(image))[
+                        "normalization"
+                    ].numpy()
+                else:
+                    features = self.prediction_model.predict(image)
+                self.lookuptable.add(id, features, label)
+            print("Saving the model to {}".format(self.model_path))
+            self.save(path=self.model_path)
 
     def query(self, image, verbose=True):
         # Compute the embeddings of the query image and fetch the results.
@@ -54,7 +69,7 @@ class LatentModel:
         else:
             features = self.prediction_model.predict(image)
 
-        results = self.lsh.query(features)
+        results = self.lookuptable.query(features)
         if verbose:
             print("Matches:", len(results))
 
@@ -69,9 +84,11 @@ class LatentModel:
             counts[k] = float(counts[k]) / self.dim
         return counts
 
+    def save(self, path=DEFAULT_PATH):
+        self.lookuptable.save()
 
-    def save(self, path):
-        self.prediction_model.save(path)
+    def load(self, path=DEFAULT_PATH):
+        self.lookuptable.load()
 
 
 def get_pretrained_model(
