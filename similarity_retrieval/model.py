@@ -8,7 +8,12 @@ from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import layers
 from tqdm import tqdm
 
-from dataset import LookUpTable, DEFAULT_PATH
+try:
+    from similarity_retrieval.database import DEFAULT_PATH, LookUpTable
+except Exception as e:
+    print("Import error: {}".format(e))
+    print("importing from local directory")
+    
 
 
 class LatentModel:
@@ -19,26 +24,38 @@ class LatentModel:
         hash_size=8,
         dim=2048,
         num_tables=10,
-        model_path=DEFAULT_PATH
+        model_path=DEFAULT_PATH,
+        force_retrain=False
     ):
         self.hash_size = hash_size
         self.dim = dim
         self.num_tables = num_tables
         self.lookuptable = LookUpTable(
-            self.hash_size,
-            self.dim,
-            self.num_tables
+            self.hash_size, self.dim, self.num_tables
         )
 
         self.prediction_model = prediction_model
         self.concrete_function = concrete_function
         self.model_path = model_path
+        self.force_retrain = force_retrain
 
     def train(self, training_files):
+        if self.force_retrain:
+             self.clear_cache()
+
         if os.path.isfile(self.model_path):
             print("Loading the model from {}".format(self.model_path))
             self.load(path=self.model_path)
         else:
+
+            path = self.model_path
+            if not os.path.exists(path):
+                dir_path = os.path.dirname(os.path.abspath(path))
+                if not os.path.exists(dir_path):
+                    os.makedirs(dir_path)
+
+            self.save(path=self.model_path)
+            
             for id, training_file in tqdm(enumerate(training_files)):
                 # Unpack the data.
                 image, label = training_file
@@ -52,6 +69,7 @@ class LatentModel:
                 else:
                     features = self.prediction_model.predict(image)
                 self.lookuptable.add(id, features, label)
+                self.save(path=self.model_path)
             print("Saving the model to {}".format(self.model_path))
             self.save(path=self.model_path)
 
@@ -82,11 +100,23 @@ class LatentModel:
             counts[k] = float(counts[k]) / self.dim
         return counts
 
-    def save(self, path=DEFAULT_PATH):
-        self.lookuptable.save()
+    def save(self, path=None):
+        if path is None:
+            path = self.model_path
+            if not os.path.exists(path):
+                dir_path = os.path.dirname(os.path.abspath(path))
+                os.makedirs(dir_path)
+        self.lookuptable.save(path)
 
-    def load(self, path=DEFAULT_PATH):
-        self.lookuptable.load()
+    def load(self, path=None):
+        if path is None:
+            path = self.model_path
+        self.lookuptable.load(path)
+
+    def clear_cache(self, path=None):
+        if path is None:
+            path = self.model_path
+        self.lookuptable.clear_cache(path)
 
 
 def get_pretrained_model(

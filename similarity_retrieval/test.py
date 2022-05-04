@@ -1,7 +1,9 @@
 import unittest
 
-from model import LatentModel, get_pretrained_model
-from dataset import download_fashion_mnist
+
+from similarity_retrieval.model import LatentModel, get_pretrained_model
+from similarity_retrieval.database import download_fashion_mnist
+
 
 
 class TestDataset(unittest.TestCase):

@@ -1,12 +1,14 @@
+import os
 import pickle
 import numpy as np
 
-from keras.datasets import fashion_mnist
+import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras import datasets
 from keras import backend as K
 
 
-DEFAULT_PATH = "./assets/lookuptable.pkl"
+DEFAULT_PATH = "assets/lookuptable.pkl"
 
 
 class Table:
@@ -76,32 +78,31 @@ class LookUpTable:
         return results
 
     def save(self, path=DEFAULT_PATH):
-        with open(path, 'wb') as outp:  # Overwrites any existing file.
+        with open(path, "wb") as outp:  # Overwrites any existing file.
             pickle.dump(self.tables, outp, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path=DEFAULT_PATH):
-        with open(path, 'rb') as inp:
+        with open(path, "rb") as inp:
             self.tables = pickle.load(inp)
-
+  
+    def clear_cache(self, path=DEFAULT_PATH):
+        if os.path.isfile(path):
+        	os.remove(path)
 
 def grayscale_to_rgb(images, channel_axis=-1):
     images = K.expand_dims(images, axis=channel_axis)
-    tiling = [1] * 4    # 4 dimensions: B, H, W, C
+    tiling = [1] * 4  # 4 dimensions: B, H, W, C
     tiling[channel_axis] *= 3
     images = K.tile(images, tiling)
     return images
 
 
-def download_fashion_mnist():
+def download_fashion_mnist(samples=10000):
     """ download mnist dataset
     """
     num_classes = 10
 
-    (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
-    assert x_train.shape == (60000, 28, 28)
-    assert x_test.shape == (10000, 28, 28)
-    assert y_train.shape == (60000,)
-    assert y_test.shape == (10000,)
+    (x_train, y_train), (x_test, y_test) = datasets.fashion_mnist.load_data()
 
     x_train = grayscale_to_rgb(x_train)
     x_test = grayscale_to_rgb(x_test)
@@ -113,4 +114,9 @@ def download_fashion_mnist():
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
 
-    return (x_train, y_train), (x_test, y_test)
+    assert x_train.shape == (60000, 28, 28, 3)
+    assert x_test.shape == (10000, 28, 28, 3)
+    assert y_train.shape == (60000, 10)
+    assert y_test.shape == (10000, 10)
+
+    return (x_train[:samples], y_train[:samples]), (x_test[:samples], y_test[:samples])
