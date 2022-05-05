@@ -43,7 +43,7 @@ def visualize_query_results(
 
 if __name__ == "__main__":
     st.header("Image Similarity Retrieval")
-    (x_train, y_train), (x_test, y_test) = download_fashion_mnist(samples=100)
+    (x_train, y_train), (x_test, y_test) = download_fashion_mnist(samples=6000)
     training_files = zip(x_train, y_train)
     embedding_model = get_pretrained_model()
 
