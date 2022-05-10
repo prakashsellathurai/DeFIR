@@ -1,6 +1,7 @@
 # DeFIR
 Content based Image retrieval utilising Nearest Neighbour Search and Deep Learning. 
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/prakashsellathurai/defir/main/app.py)
 
 ## Installation
 
