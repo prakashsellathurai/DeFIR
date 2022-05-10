@@ -1,5 +1,5 @@
 # DeFIR
-DeepFeature-based image retrieval utilising Nearest Neighbour Search and Deep Learning. 
+Content based Image retrieval utilising Nearest Neighbour Search and Deep Learning. 
 
 
 ## Installation
