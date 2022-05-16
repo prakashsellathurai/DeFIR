@@ -1,5 +1,5 @@
 # DeFIR
-Image Retrieval System for locating images based on their content using the Nearest Neighbor Search Algorithm and Deep Learning. 
+Image Retrieval System to locate images based on their content using the Nearest Neighbor Search Algorithm and Deep Learning.  
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/prakashsellathurai/defir/main/app.py)
 
